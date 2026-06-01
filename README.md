@@ -51,3 +51,4 @@ https://<owner>.github.io/<repo>/navsim_human_eval_navtest/
 
 Each annotator exports their own JSONL or CSV from the browser.
 
+# NavDecision-Human-Eval-zh
