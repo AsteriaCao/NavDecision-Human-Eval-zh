@@ -147,7 +147,6 @@
         <h2>QA Pair & GPT Score <span class="desc">模型生成的问答，以及自动评分；人工评分以图像和事实为准。</span></h2>
         <div class="content">
           <div class="token"><span id="caseOrder"></span><span id="token"></span></div>
-          <p><span class="pill" id="actionGroup"></span> <span class="muted" id="actionState"></span></p>
           <div class="qa-label">Question</div><p class="qa-text" id="question"></p>
           <div class="qa-label">Answer</div><p class="qa-text" id="answer"></p>
           <div class="qa-label">GPT Score</div>
@@ -297,8 +296,6 @@
       el("bevImage").src = item.bev_gt;
       el("caseOrder").textContent = `Case ${state.index + 1} / ${state.cases.length}`;
       el("token").textContent = item.token;
-      el("actionGroup").textContent = item.action_group_label;
-      el("actionState").textContent = `${item.action_state || ""} ${item.velocity_state ? "/ " + item.velocity_state : ""}`;
       el("question").textContent = item.question;
       el("answer").textContent = item.answer;
       const g = item.gpt_score || {};
