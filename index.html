@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>NavDecision Human Eval</title>
+  <title>NavDecision 人工评估（中文版）</title>
   <style>
     :root {
       --bg: #f5f7fa;
@@ -20,7 +20,7 @@
       margin: 0;
       color: var(--text);
       background: var(--bg);
-      font: 14px/1.45 system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      font: 14px/1.45 system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
     }
     header {
       position: sticky;
@@ -89,8 +89,19 @@
       font: 12px ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
       overflow-wrap: anywhere;
     }
-    .qa-label { margin: 12px 0 4px; color: var(--muted); font-size: 12px; font-weight: 700; text-transform: uppercase; }
+    .qa-label { margin: 12px 0 4px; color: var(--muted); font-size: 12px; font-weight: 700; letter-spacing: .04em; }
     .qa-text { margin: 0; white-space: pre-wrap; }
+    .qa-bilingual {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+      align-items: start;
+    }
+    .qa-cell { min-width: 0; }
+    .qa-cell .lang { display: inline-block; margin-bottom: 4px; padding: 1px 6px; border-radius: 3px; background: var(--soft); color: var(--accent); font-size: 11px; font-weight: 650; }
+    .qa-cell.en .lang { background: #f2f4f7; color: var(--muted); }
+    .qa-cell.en p { color: var(--muted); }
+    @media (max-width: 900px) { .qa-bilingual { grid-template-columns: 1fr; } }
     .choice {
       display: inline-flex;
       align-items: center;
@@ -122,88 +133,99 @@
 <body>
   <header>
     <div>
-      <h1>NavDecision 数据质量人工评估</h1>
-      <div class="status" id="status">Loading manifest...</div>
+      <h1>NavDecision 数据质量人工评估（中文版）</h1>
+      <div class="status" id="status">正在加载 manifest...</div>
     </div>
     <div class="toolbar">
-      <button id="prevBtn" type="button">Prev</button>
-      <button id="nextBtn" type="button">Next</button>
-      <button id="exportJsonlBtn" type="button">Export JSONL</button>
-      <button id="submitBtn" type="button" class="primary">Submit JSONL</button>
-      <button id="clearBtn" type="button">Clear Local</button>
+      <button id="prevBtn" type="button">上一题</button>
+      <button id="nextBtn" type="button">下一题</button>
+      <button id="exportJsonlBtn" type="button">导出 JSONL</button>
+      <button id="submitBtn" type="button" class="primary">提交 JSONL</button>
+      <button id="clearBtn" type="button">清除本地</button>
     </div>
   </header>
   <main>
     <div id="error" class="error" hidden></div>
-    <nav class="case-nav" id="caseNav" aria-label="Cases"></nav>
+    <nav class="case-nav" id="caseNav" aria-label="题目导航"></nav>
     <section class="workspace" id="workspace" hidden>
       <div class="visual-grid">
-        <article class="panel"><h2>Left View <span class="desc">左前侧相机，主要看左侧车道/盲区/相邻车辆。</span></h2><div class="image-wrap"><img id="leftImage" alt="left camera"></div></article>
-        <article class="panel"><h2>Front View <span class="desc">前视相机，主要看当前车道、前车、信号灯和路口。</span></h2><div class="image-wrap"><img id="frontImage" alt="front camera"></div></article>
-        <article class="panel"><h2>Right View <span class="desc">右前侧相机，主要看右侧车道/盲区/相邻车辆。</span></h2><div class="image-wrap"><img id="rightImage" alt="right camera"></div></article>
-        <article class="panel"><h2>BEV Map + GT Trajectory <span class="desc">鸟瞰地图和真实未来轨迹，用于判断转向/变道/停车是否一致。</span></h2><div class="image-wrap"><img id="bevImage" alt="bev map with trajectory"></div></article>
+        <article class="panel"><h2>左视图 <span class="desc">左前侧相机，主要看左侧车道 / 盲区 / 相邻车辆。</span></h2><div class="image-wrap"><img id="leftImage" alt="左侧相机"></div></article>
+        <article class="panel"><h2>前视图 <span class="desc">前视相机，主要看当前车道、前车、信号灯和路口。</span></h2><div class="image-wrap"><img id="frontImage" alt="前视相机"></div></article>
+        <article class="panel"><h2>右视图 <span class="desc">右前侧相机，主要看右侧车道 / 盲区 / 相邻车辆。</span></h2><div class="image-wrap"><img id="rightImage" alt="右侧相机"></div></article>
+        <article class="panel"><h2>鸟瞰地图 + 真值轨迹 <span class="desc">鸟瞰地图与真实未来轨迹，用于判断转向 / 变道 / 停车是否一致。</span></h2><div class="image-wrap"><img id="bevImage" alt="鸟瞰地图与轨迹"></div></article>
       </div>
       <article class="panel">
-        <h2>QA Pair & GPT Score <span class="desc">模型生成的问答，以及自动评分；人工评分以图像和事实为准。</span></h2>
+        <h2>问答对 与 GPT 评分 <span class="desc">模型生成的问答，以及自动评分；人工评分以图像和事实为准。</span></h2>
         <div class="content">
           <div class="token"><span id="caseOrder"></span><span id="token"></span></div>
-          <div class="qa-label">Question</div><p class="qa-text" id="question"></p>
-          <div class="qa-label">Answer</div><p class="qa-text" id="answer"></p>
-          <div class="qa-label">GPT Score</div>
+          <div class="qa-label">问题</div>
+          <div class="qa-bilingual">
+            <div class="qa-cell zh"><span class="lang">中文</span><p class="qa-text" id="questionZh"></p></div>
+            <div class="qa-cell en"><span class="lang">English</span><p class="qa-text" id="question"></p></div>
+          </div>
+          <div class="qa-label">答案</div>
+          <div class="qa-bilingual">
+            <div class="qa-cell zh"><span class="lang">中文</span><p class="qa-text" id="answerZh"></p></div>
+            <div class="qa-cell en"><span class="lang">English</span><p class="qa-text" id="answer"></p></div>
+          </div>
+          <div class="qa-label">GPT 评分</div>
           <div id="gptSummary"></div>
           <details>
-            <summary>GPT subscores / diagnosis <span class="desc">展开可查看自动评分的各子项和诊断理由。</span></summary>
+            <summary>GPT 子项评分 / 诊断 <span class="desc">展开可查看自动评分的各子项和诊断理由。</span></summary>
             <pre id="gptDetail"></pre>
           </details>
         </div>
       </article>
       <div class="form-grid">
-        <article class="panel"><h2>A. Overall Quality <span class="desc">整体质量 1~5 分，5 最好。</span></h2><div class="content"><div id="likertFields"></div></div></article>
-        <article class="panel"><h2>B/C. Hallucination & Leakage <span class="desc">核查幻觉实体、属性错误、显著遗漏和未来信息泄漏。</span></h2><div class="content"><h3>B. 幻觉核查</h3><div id="hallucinationFields"></div><h3>C. 泄漏核查</h3><div id="leakageFields"></div></div></article>
-        <article class="panel"><h2>D/E. Relabel & Reasoning <span class="desc">独立判断动作/加速度，并核查理由是否真实、是否支撑决策。</span></h2><div class="content"><h3>D. 独立重标</h3><div id="relabelFields"></div><h3>E. 推理正确性细项</h3><div id="reasoningFields"></div></div></article>
-        <article class="panel"><h2>F. Primary Error Type <span class="desc">该样本最主要的问题类型，可多选；没有问题选 None。</span></h2><div class="content"><div id="errorFields"></div><h3>Notes</h3><textarea id="notes" placeholder="Optional notes"></textarea></div></article>
+        <article class="panel"><h2>A. 整体质量 <span class="desc">整体质量 1~5 分，5 最好。</span></h2><div class="content"><div id="likertFields"></div></div></article>
+        <article class="panel"><h2>B/C. 幻觉与泄漏 <span class="desc">核查幻觉实体、属性错误、显著遗漏和未来信息泄漏。</span></h2><div class="content"><h3>B. 幻觉核查</h3><div id="hallucinationFields"></div><h3>C. 泄漏核查</h3><div id="leakageFields"></div></div></article>
+        <article class="panel"><h2>D/E. 重标与推理 <span class="desc">独立判断动作 / 加速度，并核查理由是否真实、是否支撑决策。</span></h2><div class="content"><h3>D. 独立重标</h3><div id="relabelFields"></div><h3>E. 推理正确性细项</h3><div id="reasoningFields"></div></div></article>
+        <article class="panel"><h2>F. 主要错误类型 <span class="desc">该样本最主要的问题类型，可多选；没有问题选「无」。</span></h2><div class="content"><div id="errorFields"></div><h3>备注</h3><textarea id="notes" placeholder="可选备注"></textarea></div></article>
       </div>
     </section>
   </main>
   <script>
+    // 中文译文从 translations.json 异步加载；按 token 索引
+    const translations = { common_prefix_zh: "", items: {} };
+
     const schema = {
       likert: [
-        ["a1_scene_correctness", "A1 Scene Correctness", "场景与实体描述是否与三视图一致。"],
-        ["a2_action_correctness", "A2 Action Correctness", "决策动作、转向和速度是否在当前场景下合理。"],
-        ["a3_reasoning_correctness", "A3 Reasoning Correctness", "理由是否事实正确，并能支撑该决策。"],
-        ["a4_safety", "A4 Safety", "决策是否安全，是否避免碰撞和危险交互。"],
-        ["a5_overall", "A5 Overall", "综合质量评分，不要只因文笔流畅而给高分。"]
+        ["a1_scene_correctness", "A1 场景正确性", "场景与实体描述是否与三视图一致。"],
+        ["a2_action_correctness", "A2 动作正确性", "决策动作、转向和速度是否在当前场景下合理。"],
+        ["a3_reasoning_correctness", "A3 推理正确性", "理由是否事实正确，并能支撑该决策。"],
+        ["a4_safety", "A4 安全性", "决策是否安全，是否避免碰撞和危险交互。"],
+        ["a5_overall", "A5 综合", "综合质量评分，不要只因文笔流畅而给高分。"]
       ],
       radios: [
-        ["b1_nonexistent_entities", "B1 Nonexistent Entities", "文本提到但图像里不存在的实体数量。", ["0", "1", ">=2"]],
-        ["b2_entity_attribute_error", "B2 Entity Attribute Error", "已有实体的颜色、车道、运动状态等属性是否错误。", ["无错", "有错"]],
-        ["b3_significant_agent_missing", "B3 Significant Agent Missing", "图像中影响驾驶决策的显著 agent 是否被遗漏。", ["无遗漏", "有遗漏"]],
-        ["c1_future_leakage", "C1 Future Leakage", "是否包含仅凭当前/历史图像和 ego state 无法得知的未来具体信息。", ["无", "有"]],
-        ["d1_driving_command", "D1 Driving Command", "你独立判断的横向/方向动作。", ["Turn Left", "Turn Right", "Straight", "Change Lane", "Stop"]],
-        ["d2_driving_acceleration", "D2 Driving Acceleration", "你独立判断的速度趋势。", ["Accelerate", "Decelerate", "Maintain Speed"]],
-        ["e1_fact_premise_truth", "E1 Fact Premise Truth", "理由中引用的事实前提是否属实，例如绿灯、有前车、旁车位置。", ["全部属实", "部分错误", "大部分错误"]],
-        ["e2_reason_supports_decision", "E2 Reason Supports Decision", "这些理由在逻辑上是否支撑答案里的驾驶决策。", ["支撑", "部分支撑", "不支撑或矛盾"]]
+        ["b1_nonexistent_entities", "B1 不存在的实体", "文本提到但图像里不存在的实体数量。", ["0", "1", "≥2"]],
+        ["b2_entity_attribute_error", "B2 实体属性错误", "已有实体的颜色、车道、运动状态等属性是否错误。", ["无错", "有错"]],
+        ["b3_significant_agent_missing", "B3 显著 agent 遗漏", "图像中影响驾驶决策的显著 agent 是否被遗漏。", ["无遗漏", "有遗漏"]],
+        ["c1_future_leakage", "C1 未来信息泄漏", "是否包含仅凭当前 / 历史图像和 ego state 无法得知的未来具体信息。", ["无", "有"]],
+        ["d1_driving_command", "D1 驾驶动作", "你独立判断的横向 / 方向动作。", ["左转", "右转", "直行", "变道", "停车"]],
+        ["d2_driving_acceleration", "D2 加减速", "你独立判断的速度趋势。", ["加速", "减速", "保持速度"]],
+        ["e1_fact_premise_truth", "E1 事实前提是否属实", "理由中引用的事实前提是否属实，例如绿灯、有前车、旁车位置。", ["全部属实", "部分错误", "大部分错误"]],
+        ["e2_reason_supports_decision", "E2 理由是否支撑决策", "这些理由在逻辑上是否支撑答案里的驾驶决策。", ["支撑", "部分支撑", "不支撑或矛盾"]]
       ],
       checks: [
-        ["c2_leakage_types", "C2 Leakage Types", "泄漏的具体类型，可多选。", ["无", "精确未来速度值", "精确转角度数", "把未来结果当既成事实陈述", "其他"]],
-        ["f_primary_error_types", "Primary Error Type", "该样本最主要的问题类型，可多选；无问题选 None。", [
-          ["None", "无明显问题。"],
-          ["Scene mismatch", "场景或实体描述与三视图不一致。"],
-          ["Hallucination", "提到了图像中不存在的实体、标志、信号或事件。"],
-          ["Trajectory mismatch", "答案动作与 BEV GT 轨迹趋势明显不一致。"],
-          ["Wrong direction", "转向/直行/变道方向判断错误。"],
-          ["Wrong acceleration", "加速、减速、保持速度判断错误。"],
-          ["Wrong reasoning", "理由事实错误、逻辑不成立或与答案矛盾。"],
-          ["Leakage", "包含仅凭输入无法得知的未来具体信息。"],
-          ["Too generic", "答案过泛，缺少关键场景约束或具体决策。"],
-          ["Unsafe behavior", "决策可能导致碰撞、违反交通规则或危险交互。"],
-          ["Over-cautious", "过度保守，明显影响通行效率且缺少必要原因。"],
-          ["Language issue", "语言表达、翻译、格式或可读性问题。"],
-          ["Other", "其他无法归入以上类别的问题，请在 Notes 说明。"]
+        ["c2_leakage_types", "C2 泄漏类型", "泄漏的具体类型，可多选。", ["无", "精确未来速度值", "精确转角度数", "把未来结果当既成事实陈述", "其他"]],
+        ["f_primary_error_types", "主要错误类型", "该样本最主要的问题类型，可多选；无问题选「无」。", [
+          ["无", "无明显问题。"],
+          ["场景不一致", "场景或实体描述与三视图不一致。"],
+          ["幻觉", "提到了图像中不存在的实体、标志、信号或事件。"],
+          ["轨迹不一致", "答案动作与 BEV 真值轨迹趋势明显不一致。"],
+          ["方向错误", "转向 / 直行 / 变道方向判断错误。"],
+          ["加减速错误", "加速、减速、保持速度判断错误。"],
+          ["推理错误", "理由事实错误、逻辑不成立或与答案矛盾。"],
+          ["泄漏", "包含仅凭输入无法得知的未来具体信息。"],
+          ["过于泛化", "答案过泛，缺少关键场景约束或具体决策。"],
+          ["不安全行为", "决策可能导致碰撞、违反交通规则或危险交互。"],
+          ["过度保守", "过度保守，明显影响通行效率且缺少必要原因。"],
+          ["语言问题", "语言表达、翻译、格式或可读性问题。"],
+          ["其他", "其他无法归入以上类别的问题，请在备注中说明。"]
         ]]
       ]
     };
-    const state = { cases: [], index: 0, annotations: {}, storageKey: "navtest-human-eval-v2" };
+    const state = { cases: [], index: 0, annotations: {}, storageKey: "navtest-human-eval-zh-v2" };
     const el = id => document.getElementById(id);
     const allFields = [
       ...schema.likert.map(x => x[0]),
@@ -289,21 +311,28 @@
     function renderCase() {
       const item = currentCase();
       const ann = currentAnnotation();
+      const tr = (translations.items && translations.items[item.token]) || {};
+      const prefix = translations.common_prefix_zh || "";
       el("workspace").hidden = false;
       el("leftImage").src = item.left_image;
       el("frontImage").src = item.front_image;
       el("rightImage").src = item.right_image;
       el("bevImage").src = item.bev_gt;
-      el("caseOrder").textContent = `Case ${state.index + 1} / ${state.cases.length}`;
+      el("caseOrder").textContent = `第 ${state.index + 1} 题 / 共 ${state.cases.length} 题`;
       el("token").textContent = item.token;
+      const questionZh = tr.question_zh
+        ? (prefix ? `${prefix}\n${tr.question_zh}` : tr.question_zh)
+        : "（暂无中文译文）";
+      el("questionZh").textContent = questionZh;
       el("question").textContent = item.question;
+      el("answerZh").textContent = tr.answer_zh || "（暂无中文译文）";
       el("answer").textContent = item.answer;
       const g = item.gpt_score || {};
       el("gptSummary").innerHTML = [
-        `Final: <strong>${g.final_score ?? "N/A"}</strong>`,
-        `Decision: <strong>${g.decision_record_score ?? "N/A"}</strong>`,
-        `QA: <strong>${g.qa_extraction_score ?? "N/A"}</strong>`,
-        `Human review: <strong>${g.needs_human_review ?? "N/A"}</strong>`
+        `最终: <strong>${g.final_score ?? "N/A"}</strong>`,
+        `决策: <strong>${g.decision_record_score ?? "N/A"}</strong>`,
+        `问答: <strong>${g.qa_extraction_score ?? "N/A"}</strong>`,
+        `需人工复审: <strong>${g.needs_human_review ?? "N/A"}</strong>`
       ].join(" · ");
       el("gptDetail").textContent = JSON.stringify({
         decision_atoms: g.decision_atoms,
@@ -328,7 +357,7 @@
         const btn = document.createElement("button");
         btn.type = "button";
         btn.textContent = String(idx + 1);
-        btn.title = `${item.action_group_label}: ${item.token}`;
+        btn.title = item.token;
         btn.className = [idx === state.index ? "active" : "", isDone(item.token) ? "done" : ""].filter(Boolean).join(" ");
         btn.addEventListener("click", () => { persistCurrent(); state.index = idx; renderCase(); });
         nav.appendChild(btn);
@@ -336,9 +365,8 @@
     }
     function renderStatus() {
       const done = state.cases.filter(item => isDone(item.token)).length;
-      const groups = state.cases.reduce((acc, item) => (acc[item.action_group_label] = (acc[item.action_group_label] || 0) + 1, acc), {});
-      const submitHint = state.index === state.cases.length - 1 && allDone() ? " · ready to submit" : "";
-      el("status").textContent = `${done} / ${state.cases.length} completed · ${Object.entries(groups).map(([k,v]) => `${k}:${v}`).join(" ")}${submitHint}`;
+      const submitHint = state.index === state.cases.length - 1 && allDone() ? " · 可提交" : "";
+      el("status").textContent = `已完成 ${done} / 共 ${state.cases.length}${submitHint}`;
     }
     function rowsForExport() {
       persistCurrent();
@@ -352,38 +380,44 @@
       a.click();
       URL.revokeObjectURL(a.href);
     }
-    function csvEscape(value) {
-      const text = typeof value === "object" ? JSON.stringify(value ?? "") : String(value ?? "");
-      return /[",\n]/.test(text) ? `"${text.replaceAll('"', '""')}"` : text;
-    }
     function exportJsonl() {
-      download("navtest_human_eval_annotations.jsonl", rowsForExport().map(row => JSON.stringify(row)).join("\n") + "\n", "application/jsonl");
+      download("navtest_human_eval_annotations_zh.jsonl", rowsForExport().map(row => JSON.stringify(row)).join("\n") + "\n", "application/jsonl");
     }
     function submitJsonl() {
       persistCurrent();
       if (state.index !== state.cases.length - 1) {
-        alert("请先到第100页再提交。");
+        alert(`请先翻到第 ${state.cases.length} 题再提交。`);
         return;
       }
       if (!allDone()) {
-        alert("没有填完问卷。请完成第1到第100页的所有必填选项后再提交；Notes 可不填。");
+        alert(`还没有填完问卷。请完成第 1 至第 ${state.cases.length} 题的所有必填项后再提交；备注可不填。`);
         return;
       }
       const stamp = new Date().toISOString().replaceAll(":", "-").replace(/\..+$/, "");
-      download(`navtest_human_eval_submit_${stamp}.jsonl`, rowsForExport().map(row => JSON.stringify(row)).join("\n") + "\n", "application/jsonl");
+      download(`navtest_human_eval_submit_zh_${stamp}.jsonl`, rowsForExport().map(row => JSON.stringify(row)).join("\n") + "\n", "application/jsonl");
     }
     async function init() {
       initForm();
       loadLocal();
       try {
-        const response = await fetch("manifest.json", { cache: "no-store" });
-        if (!response.ok) throw new Error(`manifest.json returned ${response.status}`);
-        state.cases = await response.json();
-        if (!Array.isArray(state.cases) || state.cases.length === 0) throw new Error("manifest.json is empty or invalid");
+        const [manifestResp, transResp] = await Promise.all([
+          fetch("manifest.json", { cache: "no-store" }),
+          fetch("translations.json", { cache: "no-store" })
+        ]);
+        if (!manifestResp.ok) throw new Error(`manifest.json 返回 ${manifestResp.status}`);
+        state.cases = await manifestResp.json();
+        if (!Array.isArray(state.cases) || state.cases.length === 0) throw new Error("manifest.json 为空或格式无效");
+        if (transResp.ok) {
+          const t = await transResp.json();
+          translations.common_prefix_zh = t.common_prefix_zh || "";
+          translations.items = t.items || {};
+        } else {
+          console.warn(`translations.json 加载失败：${transResp.status}，将仅显示英文原文。`);
+        }
       } catch (err) {
         el("error").hidden = false;
-        el("error").innerHTML = `<strong>manifest.json is not loaded.</strong><br><br>Run the navtest build script first, then serve this directory over HTTP.<pre>python tools/build_navtest_human_eval.py --out-dir docs/navsim_human_eval_navtest --samples-per-action 20 --overwrite</pre><br>Browser error: ${err.message}`;
-        el("status").textContent = "Manifest not loaded";
+        el("error").innerHTML = `<strong>manifest.json 加载失败。</strong><br><br>请先运行 navtest 构建脚本，然后通过 HTTP 访问该目录。<pre>python tools/build_navtest_human_eval.py --out-dir docs/navsim_human_eval_navtest --samples-per-action 20 --overwrite</pre><br>浏览器报错：${err.message}`;
+        el("status").textContent = "Manifest 未加载";
         return;
       }
       el("prevBtn").addEventListener("click", () => { persistCurrent(); state.index = Math.max(0, state.index - 1); renderCase(); });
@@ -391,7 +425,7 @@
       el("exportJsonlBtn").addEventListener("click", exportJsonl);
       el("submitBtn").addEventListener("click", submitJsonl);
       el("clearBtn").addEventListener("click", () => {
-        if (!confirm("Clear annotations stored in this browser?")) return;
+        if (!confirm("确定要清除浏览器中保存的标注吗？")) return;
         state.annotations = {};
         saveLocal();
         renderCase();
